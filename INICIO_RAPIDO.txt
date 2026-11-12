@@ -1,0 +1,29 @@
+NEXUS NOC + TEMPQUEST - PAQUETE INTEGRADO
+========================================
+
+CONTENIDO
+- nexus_mysql/: página web, API PHP y proceso de notificaciones.
+- tempquest-android/: proyecto Android Studio modificado para la API PHP y notificaciones push generales.
+
+ANTES DE USAR
+1. Importá nexus_mysql/notification_worker/install.sql en la base sensores_db.
+2. Configurá nexus_mysql/config.php con las credenciales MySQL.
+3. Configurá Firebase siguiendo nexus_mysql/INSTALACION_NOTIFICACIONES.txt.
+4. Instalá dependencias y configurá notification_worker/config.ini.
+5. Ejecutá notification_worker/worker.py y dejalo activo.
+6. Copiá nexus_mysql a htdocs en XAMPP o subilo al hosting.
+7. Agregá google-services.json en tempquest-android/app/ y compilá el APK desde Android Studio.
+8. En TempQuest configurá la URL del servidor.
+
+MODOS
+- Emulador Android: http://10.0.2.2/nexus_mysql
+- Celular + XAMPP: http://IP-DE-LA-PC/nexus_mysql
+- Online: https://TU-DOMINIO/nexus_mysql
+
+No se incluye ninguna clave privada de Firebase ni google-services.json. Deben generarse desde tu propio proyecto Firebase.
+
+VALIDACIONES REALIZADAS
+- Sintaxis PHP comprobada con php -l.
+- Sintaxis Python comprobada con py_compile.
+- No fue posible compilar el APK en este entorno porque Gradle necesita descargar su distribución y el entorno no tiene acceso a Internet. Compilá desde Android Studio.
+- No se probó contra una instancia MySQL/Firebase real; la activación de push requiere completar las credenciales indicadas.

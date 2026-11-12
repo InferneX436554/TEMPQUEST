@@ -1,0 +1,36 @@
+NEXUS NOC conectado a sensores_db
+
+ARCHIVOS
+- index.html: panel web con lecturas reales.
+- api.php: API que consulta y guarda mediciones.
+- config.php: configuración de conexión MySQL.
+
+REQUISITOS
+- XAMPP (Apache y MySQL) o un servidor equivalente con PHP 8+ y PDO MySQL.
+- La base de datos sensores_db importada en MySQL.
+- El dispositivo con id 1 debe existir y estar activo.
+
+INSTALACIÓN EN XAMPP
+1. Copiá la carpeta nexus_mysql dentro de C:\xampp\htdocs\
+2. Iniciá Apache y MySQL desde el panel de XAMPP.
+3. Importá el dump SQL en phpMyAdmin si todavía no lo hiciste.
+4. Revisá config.php:
+   host: 127.0.0.1
+   base: sensores_db
+   usuario: root
+   contraseña: vacía por defecto en XAMPP. Cambiala si tu MySQL usa otra.
+5. Abrí en el navegador:
+   http://localhost/nexus_mysql/
+
+USO
+- El panel consulta las últimas mediciones automáticamente cada 10 segundos.
+- Los controles deslizantes preparan valores de prueba.
+- El botón "Guardar medición" inserta una fila real en mediciones, vinculada al dispositivo id 1.
+- La presión se envía como NULL porque el panel actual no tiene un control de presión.
+- Para que un ESP8266 real envíe datos, debe hacer un HTTP POST JSON a api.php con:
+  {"id_dispositivo":1,"temperatura":23.8,"humedad":48.5,"presion":1013.25}
+
+IMPORTANTE
+No abras index.html haciendo doble clic (file://). Debe servirse desde Apache/PHP.
+La conexión y el guardado dependen de que MySQL esté iniciado y las credenciales de config.php sean correctas.
+Los datos de CPU/RAM de Proxmox y el estado de la infraestructura siguen siendo valores simulados del diseño original; esta integración conecta la telemetría ambiental con la base sensores_db.

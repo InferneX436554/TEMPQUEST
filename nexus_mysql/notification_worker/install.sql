@@ -1,0 +1,20 @@
+CREATE TABLE IF NOT EXISTS tempquest_devices (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  fcm_token VARCHAR(4096) NOT NULL,
+  last_seen DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_tempquest_fcm_token (fcm_token(191))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS tempquest_alerts (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  event_type VARCHAR(40) NOT NULL,
+  title VARCHAR(180) NOT NULL,
+  message TEXT NOT NULL,
+  device VARCHAR(180) NOT NULL,
+  temperature DECIMAL(8,2) NULL,
+  threshold DECIMAL(8,2) NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_tempquest_alerts_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

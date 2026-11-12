@@ -1,0 +1,80 @@
+NEXUS NOC + TEMPQUEST: INSTALACIÓN LOCAL Y ONLINE
+=================================================
+
+QUÉ INCLUYE
+- api.php: API PHP compatible con las rutas que consulta TempQuest.
+- .htaccess: convierte /api/status, /api/history, /api/alerts y /api/register-device en rutas PHP.
+- notification_worker/worker.py: observa cambios en MySQL y envía mensajes mediante Firebase Cloud Messaging.
+- notification_worker/install.sql: tablas para tokens de celulares y registro de alertas.
+
+1) CONFIGURAR LA BASE DE DATOS
+- Importá notification_worker/install.sql en la base sensores_db desde phpMyAdmin.
+- Revisá config.php y colocá el usuario y contraseña reales de MySQL.
+- La base debe contener las tablas dispositivos y mediciones con las columnas utilizadas por el proyecto.
+
+2) CONFIGURAR FIREBASE (OBLIGATORIO PARA NOTIFICACIONES PUSH)
+- En https://console.firebase.google.com/ creá un proyecto.
+- Agregá una aplicación Android con el identificador exacto: com.tempquest.monitor
+- Descargá google-services.json y copialo en tempquest-android/app/google-services.json.
+- En Configuración del proyecto > Cuentas de servicio, generá una clave privada para Firebase Admin SDK.
+- Guardá el JSON de esa cuenta de servicio como notification_worker/service-account.json.
+- No incluyas service-account.json ni google-services.json privado en repositorios públicos.
+
+3) INSTALAR EL PROCESO DE NOTIFICACIONES
+Desde la carpeta notification_worker:
+  python -m venv .venv
+  .venv\Scripts\activate       (Windows)
+  pip install -r requirements.txt
+  copy config.example.ini config.ini
+- Editá config.ini con los datos de MySQL y la ruta de service-account.json.
+- Ejecutá: python worker.py
+- La primera ejecución crea una referencia del estado actual y NO envía una avalancha de notificaciones históricas.
+- Dejá el proceso ejecutándose. Revisa cambios cada 5 segundos.
+- Para producción, configurá el worker como servicio de Windows o tarea programada al iniciar sesión/encender el equipo. En Linux, usá systemd.
+
+4) XAMPP / RED LOCAL
+- Copiá la carpeta nexus_mysql dentro de C:\xampp\htdocs\nexus_mysql.
+- Iniciá Apache y MySQL en el panel de XAMPP.
+- Confirmá que mod_rewrite esté habilitado y que Apache permita archivos .htaccess (AllowOverride All).
+- Desde la PC probá: http://localhost/nexus_mysql/api/status
+- Desde el celular usá la IP LAN de la PC, por ejemplo: http://192.168.1.50/nexus_mysql
+- PC y celular deben estar en la misma Wi-Fi. Permití Apache en el firewall de Windows.
+- Ejecutá worker.py en la PC donde puede acceder a MySQL e Internet.
+
+5) SERVIDOR ONLINE
+- Subí el contenido de nexus_mysql a una carpeta del hosting, por ejemplo public_html/nexus_mysql.
+- Creá/importá la base MySQL y actualizá nexus_mysql/config.php con host, base, usuario y contraseña del hosting.
+- Confirmá que Apache tenga mod_rewrite y permita .htaccess.
+- Probá: https://TU-DOMINIO/nexus_mysql/api/status
+- Ejecutá notification_worker/worker.py en un VPS/servidor que tenga acceso a MySQL e Internet. Muchos hostings compartidos no permiten procesos persistentes; en ese caso usá cron para ejecutar un worker de una sola pasada o contratá un VPS. No expongas MySQL directamente a Internet.
+- Publicá la API únicamente mediante HTTPS. Antes de uso público agregá autenticación a la API y restringí quién puede registrar tokens.
+
+6) CONFIGURAR TEMPQUEST
+- Abrí tempquest-android en Android Studio.
+- Colocá google-services.json dentro de app/.
+- Sincronizá Gradle y compilá nuevamente (Build > Build APK(s)).
+- Instalá el APK y aceptá el permiso de notificaciones.
+- En la app tocá el indicador de conexión para cambiar la URL del servidor.
+  XAMPP desde el celular: http://IP-DE-LA-PC/nexus_mysql
+  Online: https://TU-DOMINIO/nexus_mysql
+- Al abrirse, TempQuest obtiene el token FCM y lo registra en /api/register-device.
+
+7) RUTAS DISPONIBLES
+- GET  /api/status
+- GET  /api/history
+- GET  /api/alerts
+- POST /api/register-device
+- GET/POST /api/latest (compatibilidad con la página NEXUS NOC)
+
+QUÉ CAMBIOS GENERAN NOTIFICACIÓN
+- Inserciones nuevas en mediciones.
+- Modificaciones en los últimos 150 registros de mediciones.
+- Modificaciones de nombre, ubicación, tipo o estado activo de dispositivos.
+
+IMPORTANTE SOBRE EL ALCANCE
+- El worker compara el estado de MySQL cada 5 segundos. No es un trigger instantáneo; el retraso normal será de hasta un intervalo más el envío de Firebase.
+- Al iniciar por primera vez, toma una referencia y no notifica los registros antiguos.
+- Si el worker estuvo apagado y se insertaron más de 150 mediciones antes de volver, podría no detectar todas las intermedias.
+- Las notificaciones requieren Firebase configurado, el worker encendido, Internet en el servidor y permiso de notificaciones en Android.
+- Para XAMPP local, la PC debe permanecer encendida. Para avisos fuera de la Wi-Fi local, usá el servidor online.
+- No se puede garantizar recepción si el teléfono está apagado, sin conexión, si Android fuerza la detención de la app o si el usuario bloquea las notificaciones.
